@@ -1,0 +1,421 @@
+#:import Factory kivy.factory.Factory
+#!text
+#:kivy 1.7.2
+#:set color_button (0.949, 0.902, 0.902, 1)
+#:set color_button_pressed (0.6745, 0.2941, 0.5059, 0.7)
+#:set background_normal ""
+#:set color_font   (0.957, 0.890, 0.843, 1)  # off white
+
+<MySpinnerOption@SpinnerOption>:
+    background_color: color_button if self.state == 'down' else color_button_pressed
+    background_down: 'atlas://data/images/defaulttheme/button'
+    color: color_font
+
+
+WindowManager:
+    MainScreen:
+        id: main_screen
+        name: 'main'
+    SecondScreen:
+        id: second_screen
+        name: 'second'
+
+
+
+######################################  Save Playlists Popup window initializing ######################################
+#######################################################################################################################
+
+
+<SavePlaylistPopup@Popup>
+    auto_dismiss: False
+    size_hint: 0.9, 0.2
+
+    BoxLayout:
+        orientation: 'vertical'
+        canvas:
+            Color:
+                rgba: 0.98, 0.97, 0.945, 1
+            Rectangle:
+                size: root.size
+                pos: root.pos
+
+        MDTextField:
+            id: text_input
+            hint_text: 'Name your playlist here'
+            font_name: 'fonts/Roboto-Bold.ttf'
+            text: ''
+
+        MDRelativeLayout:
+            size_hint: 1, 0.1
+
+            MDIconButton:
+                icon: 'icons/square-checkbox.png'
+                user_font_size: '12dp'
+                pos_hint: {"center_x": 0.33, "center_y": 0.5}
+                on_press:
+                    app.root.get_screen('main').save_playlist(text_input.text)
+                    root.dismiss()
+
+            MDIconButton:
+                icon: 'icons/square-dismiss.png'
+                user_font_size: '12dp'
+                pos_hint: {'center_x': 0.66, "center_y": 0.5}
+                on_press: root.dismiss()
+
+
+############################################# MAIN SCREEN INITIALIZING ################################################
+#######################################################################################################################
+
+<MainScreen>:
+
+    canvas:
+        Color:
+            rgba: 0.98, 0.97, 0.945, 1
+        Rectangle:
+            size: root.size
+            pos: root.pos
+
+
+    BoxLayout:
+        orientation: 'vertical'
+        spacing: '10dp'
+
+#----------------------------------------------------> HEAD IMAGE <-----------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------
+
+        BoxLayout:
+            size_hint: 1, 0.3
+            padding: '20dp', '0dp', '20dp', '0dp',
+
+            Button:
+                on_press: root.call_api()
+                canvas:
+                    Color:
+                        rgba: 0.98, 0.97, 0.945, 1
+                    Rectangle:
+                        size: root.size
+                        pos: root.pos
+                background_normal: 'icons/folder.png'
+
+                AsyncImage:
+                    id: cover_image
+                    source: 'icons/music_note.png'
+                    center_x: self.parent.center_x
+                    center_y: self.parent.center_y
+                    width: '350dp'
+                    height: '180dp'
+                    allow_stretch: True
+
+#--------------------------------------------> PROGRESS SLIDER AND LABELS <---------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------
+
+        MDRelativeLayout:
+            size_hint: 1, 0.05
+            padding: '20dp', '0dp', '20dp', '0dp',
+
+            Label:
+                id: info_label
+                size_hint: 1, None
+                height: dp(16)
+                text: ''
+                font_size: sp(18)
+                color: 0.6745, 0.2941, 0.5059, 1
+                bold: True
+
+        MDRelativeLayout:
+            size_hint: 1, 0.05
+
+            Label:
+                id: time_played_label
+                text: '00:00'
+                size_hint: 0.1, 0.1
+                pos_hint: {"center_x": 0.1, "center_y": 0.47}
+                color: 0.6745, 0.2941, 0.5059, 1
+                bold: True
+
+            MDSlider:
+                id: progress_slider
+                min: 0
+                max: 100
+                value: 0
+                step: 1
+                pos_hint: {"center_x": 0.5, "center_y": 0.5}
+                size_hint: 0.7, 1
+                color: 0.6745, 0.2941, 0.5059, 1
+
+            Label:
+                id: song_duration_label
+                text: '00:00'
+                size_hint: 0.1, 1
+                pos_hint: {"center_x": 0.9, "center_y": 0.48}
+                color: 0.6745, 0.2941, 0.5059, 1
+                bold: True
+
+#-----------------------------------------> FIRST LAYER OF PLAYER CONTROL BUTTONS <-------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------
+
+
+        MDRelativeLayout:
+            size_hint: 1, 0.05
+
+            MDIconButton:
+                id: loop_button
+                icon: 'icons/no_loop.png'
+                user_font_size: '12dp'
+                pos_hint: {"center_x": 0.16, "center_y": 0.5}
+                on_press: root.loop_one()
+
+            MDIconButton:
+                icon: 'icons/previous.png'
+                user_font_size: '12dp'
+                pos_hint: {'center_x': 0.32, "center_y": 0.5}
+                on_press: root.prev_next("prev")
+
+            MDIconButton:
+                id: play_button
+                icon: 'icons/play.png'
+                user_font_size: '12dp'
+                pos_hint: {'center_x': 0.48, "center_y": 0.5}
+                on_press: root.play(self)
+
+            MDIconButton:
+                icon: 'icons/next.png'
+                user_font_size: '12dp'
+                pos_hint: {"center_x": 0.64, "center_y": 0.5}
+                on_press: root.prev_next("next")
+
+
+            MDIconButton:
+                id: shuffle_button
+                icon: 'icons/repeat.png'
+                user_font_size: '12dp'
+                pos_hint: {"center_x": 0.8, "center_y": 0.5}
+                on_press: root.shuffle()
+                on_release: self.icon = 'icons/repeat.png'
+
+
+#-----------------------------------------> SECOND LAYER OF PLAYER CONTROL BUTTONS <-------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------
+
+
+        MDRelativeLayout:
+            size_hint: 1, 0.05
+
+            MDIconButton:
+                id: volume_button
+                icon: 'icons/volume.png'
+                user_font_size: '12dp'
+                pos_hint: {"center_x": 0.16, "center_y": 0.5}
+                on_press: root.mute(self)
+
+            MDSlider:
+                id: volume_slider
+                min: 0
+                max: 1
+                value: 0.2
+                step: 0.01
+                on_value: root.change_volume(self)
+                pos_hint: {"center_x": 0.32, "center_y": 0.5}
+                size_hint: 0.20, 1
+                hint: False
+                color: 0.6745, 0.2941, 0.5059, 1
+
+            MDIconButton:
+                icon: 'icons/favorite.png'
+                user_font_size: '12dp'
+                pos_hint: {"center_x": 0.48, "center_y": 0.5}
+                on_press: Factory.SavePlaylistPopup().open()
+
+            MDIconButton:
+                icon: 'icons/delete.png'
+                user_font_size: '12dp'
+                pos_hint: {"center_x": 0.64, "center_y": 0.5}
+                on_press: root.clear_songs_from_list()
+
+
+            MDIconButton:
+                icon: 'icons/playlist.png'
+                user_font_size: '12dp'
+                pos_hint: {"center_x": 0.8, "center_y": 0.5}
+                on_press:
+                    app.root.current = 'second'
+                    root.manager.transition.direction = 'left'
+
+
+#-----------------------------------------> LIST WITH CURRENT SONGS  <--------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------
+
+        RecycleView:
+            size_hint: 0.90, 0.50
+            pos_hint: {"center_x": 0.5, "center_y": 0.5}
+            padding: '20dp', '500dp','20dp', '0dp'
+            canvas.before:
+                Color:
+                    rgba: 0.6745, 0.2941, 0.5059, 0.1
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+            MDList:
+                id: playlist
+
+        BoxLayout:
+            size_hint: 1, 0.01
+
+
+
+##############################################  SECOND SCREEN INITIALIZING ############################################
+#######################################################################################################################
+
+
+
+<SecondScreen>:
+
+    canvas:
+        Color:
+            rgba: 0.98, 0.97, 0.945, 1
+        Rectangle:
+            size: root.size
+            pos: root.pos
+
+    BoxLayout:
+        orientation: 'vertical'
+
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint: 1, 0.6
+
+#-------------------------------------------------> ADDING SOME SPACE <-------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------
+
+            Label:
+                size_hint: 1, 0.05
+                text: ""
+
+#-------------------------------------------> BACK BUTTON TO FIRST SCREEN <---------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------
+
+            MDIconButton:
+                icon: 'icons/music_note.png'
+                user_font_size: '12dp'
+                pos_hint: {"center_x": 0.1, "center_y": 0.8}
+                on_press:
+                    app.root.current = 'main'
+                    root.manager.transition.direction = 'right'
+
+#-----------------------------------------------> LIST WITH PLAYLISTS  <------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------
+
+            Label:
+                text: 'Manage playlists'
+                size_hint: 1, 0.1
+                pos_hint: {"center_x": 0.5, "center_y": 0.5}
+                color: 0.6745, 0.2941, 0.5059, 1
+                font_name: 'fonts/Roboto-Bold'
+                font_size: '20dp'
+
+            ScrollView:
+                size_hint: 0.90, 0.80
+                pos_hint: {"center_x": 0.5, "center_y": 0.5}
+                padding: '20dp', '50dp','20dp', '0dp'
+                canvas.before:
+                    Color:
+                        rgba: 0.6745, 0.2941, 0.5059, 0.1
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                MDList:
+                    id: playlists_to_manage
+
+#---------------------------------------------> DATABASE MANAGING PART  <-----------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------
+
+
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint: 1, 0.3
+
+            BoxLayout:
+                orientation: 'vertical'
+                size_hint: 1, 0.1
+
+                MDRelativeLayout:
+                    size_hint: 1, 0.4
+
+                    Spinner:
+                        id: first_spinner
+                        size_hint: 0.4, 0.5
+                        pos_hint: {"center_x": 0.25, "center_y": 0.5}
+                        text: 'Query Condition'
+                        color: 0, 0, 0, 0.8
+                        background_normal: ""
+                        background_down: '0.6745, 0.2941, 0.5059, 1'
+                        background_color: 0.949, 0.902, 0.902, 1  # light pink color
+                        values: ['title', 'album', 'artist', 'genre']
+                        font_name: 'fonts/Roboto-Bold.ttf'
+                        option_cls: Factory.get("MySpinnerOption")
+
+                    Spinner:
+                        id: second_spinner
+                        size_hint: 0.4, 0.5
+                        pos_hint: {"center_x": 0.75, "center_y": 0.5}
+                        text: 'Query Condition'
+                        color: 0, 0, 0, 0.8
+                        background_normal: ""
+                        background_down: '0.6745, 0.2941, 0.5059, 1'
+                        background_color: 0.949, 0.902, 0.902, 1  # light pink color
+                        values: ['title', 'album', 'artist', 'genre']
+                        font_name: 'fonts/Roboto-Bold.ttf'
+                        option_cls: Factory.get("MySpinnerOption")
+
+
+                MDRelativeLayout:
+                    size_hint: 1, 0.2
+
+                    MDTextField:
+                        id: first_text_input
+                        size_hint: 0.4, 1
+                        pos_hint: {"center_x": 0.25, "center_y": 0.5}
+                        hint_text: 'Value'
+                        hint_text_color: 0.6745, 0.2941, 0.5059, 0.7
+                        font_name: 'fonts/Roboto-Bold.ttf'
+                        text: ''
+
+                    MDTextField:
+                        id: second_text_input
+                        size_hint: 0.4, 1
+                        pos_hint: {"center_x": 0.75, "center_y": 0.5}
+                        hint_text: 'Value'
+                        font_name: 'fonts/Roboto-Bold.ttf'
+                        text: ''
+
+
+                MDRelativeLayout:
+                    size_hint: 1, 0.2
+
+
+                    MDIconButton:
+                        icon: 'icons/folder.png'
+                        user_font_size: '12dp'
+                        pos_hint: {"center_x": 0.25, "center_y": 0.5}
+                        on_press: root.file_manager_open()
+
+
+                    MDIconButton:
+                        icon: 'icons/search.png'
+                        user_font_size: '12dp'
+                        pos_hint: {"center_x": 0.75, "center_y": 0.5}
+                        on_press:
+                            app.root.get_screen('main').populate_playlist(None, first_spinner.text, first_text_input.text, second_spinner.text, second_text_input.text)
+                            app.root.current = 'main'
+                            root.manager.transition.direction = 'right'
+                            first_spinner.text = 'Query Condition'
+                            first_text_input.text = ""
+                            second_spinner.text = 'Query Condition'
+                            second_text_input.text = ""
+
+
+                MDRelativeLayout:
+                    size_hint: 1, 0.1
+
+                    Label:
+                        size: '10dp', '10dp'
